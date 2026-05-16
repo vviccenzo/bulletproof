@@ -1,9 +1,6 @@
 package com.api.bulletproof.entity;
 
 import jakarta.persistence.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,14 +12,19 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(name = "value")
     private BigDecimal value;
 
+    @Column(name = "old_value_sender")
     private BigDecimal oldValueSender;
 
+    @Column(name = "old_value_receiver")
     private BigDecimal oldValueReceiver;
 
+    @Column(name = "new_value_sender")
     private BigDecimal newValueSender;
 
+    @Column(name = "new_value_receiver")
     private BigDecimal newValueReceiver;
 
     @ManyToOne
@@ -33,6 +35,7 @@ public class Transaction {
     @JoinColumn(name = "receiver_id")
     private User receiver;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Enumerated(value = EnumType.STRING)

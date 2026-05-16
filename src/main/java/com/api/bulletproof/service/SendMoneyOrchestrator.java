@@ -5,27 +5,24 @@ import com.api.bulletproof.entity.Transaction;
 import com.api.bulletproof.entity.TransactionStatus;
 import com.api.bulletproof.entity.User;
 import com.api.bulletproof.repository.TransactionRepository;
-import com.api.bulletproof.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.UUID;
 
 @Service
 public class SendMoneyOrchestrator {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final SendMoneyService sendMoneyService;
     private final StringRedisTemplate redisTemplate;
     private final SendMoneyValidate sendMoneyValidate;
     private final TransactionRepository transactionRepository;
 
-    SendMoneyOrchestrator(UserRepository userRepository, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate, TransactionRepository transactionRepository) {
+    SendMoneyOrchestrator(UserService userService, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate, TransactionRepository transactionRepository) {
         this.redisTemplate = redisTemplate;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.sendMoneyService = sendMoneyService;
         this.sendMoneyValidate = sendMoneyValidate;
         this.transactionRepository = transactionRepository;
@@ -42,10 +39,10 @@ public class SendMoneyOrchestrator {
         Transaction transaction = new Transaction();
 
         try {
-            User sender = this.findUser(dto.sender());
+            User sender = this.userService.findUser(dto.sender());
             this.sendMoneyValidate.validateSender(sender, dto.value());
 
-            User receiver = this.findUser(dto.receiver());
+            User receiver = this.userService.findUser(dto.receiver());
             this.sendMoneyService.transferMoney(sender, receiver, dto.value(), transaction);
 
             transaction.setStatus(TransactionStatus.FINISHED);
@@ -57,9 +54,5 @@ public class SendMoneyOrchestrator {
         } finally {
             redisTemplate.delete(idempotency);
         }
-    }
-
-    private User findUser(UUID id) {
-        return this.userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado, com ID: " + id));
     }
 }

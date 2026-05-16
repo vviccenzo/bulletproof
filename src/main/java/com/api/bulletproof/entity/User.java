@@ -2,7 +2,6 @@ package com.api.bulletproof.entity;
 
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +13,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(name = "wallet_id")
     private UUID walletId;
 
     @OneToMany(mappedBy = "receiver")

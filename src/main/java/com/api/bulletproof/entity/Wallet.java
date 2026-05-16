@@ -12,11 +12,13 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private BigDecimal total;
+    @Column(name = "total", nullable = false)
+    private BigDecimal total = BigDecimal.ZERO;
 
     @Version
     private Long version;
 
+    @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
     public UUID getId() {

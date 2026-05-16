@@ -2,32 +2,28 @@ package com.api.bulletproof.service;
 
 import com.api.bulletproof.entity.User;
 import com.api.bulletproof.entity.Wallet;
-import com.api.bulletproof.repository.WalletRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Component
 public class SendMoneyValidate {
 
-    private final WalletRepository walletRepository;
+    private final WalletService walletService;
 
-    SendMoneyValidate(WalletRepository walletRepository) {
-        this.walletRepository = walletRepository;
+    SendMoneyValidate(WalletService walletService) {
+        this.walletService = walletService;
     }
 
-
     public void validateSender(User sender, BigDecimal transactionValue) {
-        Wallet wallet = getWallet(sender.getWalletId());
+        Wallet wallet = walletService.findById(sender.getWalletId());
         boolean hasEnoughBalance = wallet.getTotal().compareTo(transactionValue) >= 0;
         if (!hasEnoughBalance) {
             throw new RuntimeException("Saldo insuficiente");
         }
-    }
 
-    private Wallet getWallet(UUID id) {
-        return this.walletRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        if (BigDecimal.ZERO.compareTo(transactionValue) < 0) {
+            throw new RuntimeException("Valor negativo não é possível ser transferido");
+        }
     }
 }
