@@ -23,8 +23,7 @@ public class SendMoneyOrchestrator {
     private final SendMoneyValidate sendMoneyValidate;
     private final TransactionRepository transactionRepository;
 
-    SendMoneyOrchestrator(UserRepository userRepository, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate,
-                          TransactionRepository transactionRepository) {
+    SendMoneyOrchestrator(UserRepository userRepository, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate, TransactionRepository transactionRepository) {
         this.redisTemplate = redisTemplate;
         this.userRepository = userRepository;
         this.sendMoneyService = sendMoneyService;
@@ -51,7 +50,7 @@ public class SendMoneyOrchestrator {
 
             transaction.setStatus(TransactionStatus.FINISHED);
             this.transactionRepository.save(transaction);
-        } catch(Exception e) {
+        } catch (Exception e) {
             transaction.setStatus(TransactionStatus.CANCELED);
             this.transactionRepository.save(transaction);
             throw e;
