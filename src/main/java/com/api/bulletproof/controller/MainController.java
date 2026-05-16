@@ -21,16 +21,15 @@ class MainController {
 
     @PostMapping
     void sendMoney(@RequestBody SendMoneyDTO input) {
-        System.out.print("to vivo");
-//        this.sendMoneyOrchestrator.execute(input);
+        this.sendMoneyOrchestrator.execute(input);
     }
 
 }
 
-// - 1 criar entidades de transação
-// - 2 implementar idepotencia
+// - 1 criar entidades de transação -> feito
+// - 2 implementar idepotencia -> feito
 // - 3 estudar lock banco
-// - 4 cache
+// - 4 cache -> feito
 // - 5 circuitbreaker
 // - 6 fallback
 // - 7 fila de requisições

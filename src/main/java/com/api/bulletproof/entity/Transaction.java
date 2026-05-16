@@ -33,11 +33,18 @@ public class Transaction {
     @JoinColumn(name = "receiver_id")
     private User receiver;
 
-    @CreatedDate
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
+    @Enumerated(value = EnumType.STRING)
+    private TransactionStatus status = TransactionStatus.PROCESSING;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = TransactionStatus.PROCESSING;
+        }
+    }
 
     public BigDecimal getValue() {
         return value;
@@ -107,7 +114,11 @@ public class Transaction {
         return createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 }
