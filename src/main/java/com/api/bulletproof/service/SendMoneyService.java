@@ -4,28 +4,28 @@ import com.api.bulletproof.entity.Transaction;
 import com.api.bulletproof.entity.User;
 import com.api.bulletproof.entity.Wallet;
 import com.api.bulletproof.repository.WalletRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 public class SendMoneyService {
 
+    private final WalletService walletService;
     private final WalletRepository walletRepository;
 
-    SendMoneyService(WalletRepository walletRepository) {
+    SendMoneyService(WalletService walletService, WalletRepository walletRepository) {
+        this.walletService = walletService;
         this.walletRepository = walletRepository;
     }
 
     public void transferMoney(User sender, User receiver, BigDecimal transferenceValue, Transaction transaction) {
-        Wallet walletSender = getWallet(sender.getWalletId());
-        Wallet walletReceiver = getWallet(receiver.getWalletId());
+        Wallet walletSender = this.walletService.findById(sender.getWalletId());
+        Wallet walletReceiver = this.walletService.findById(receiver.getWalletId());
 
-        withdraw(sender, transferenceValue, transaction, walletSender);
-        deposit(receiver, transferenceValue, transaction, walletReceiver);
+        this.withdraw(sender, transferenceValue, transaction, walletSender);
+        this.deposit(receiver, transferenceValue, transaction, walletReceiver);
 
         transaction.setValue(transferenceValue);
 
@@ -54,9 +54,5 @@ public class SendMoneyService {
 
     private BigDecimal getReceiverNewValue(Wallet receiver, BigDecimal transferenceValue) {
         return receiver.getTotal().add(transferenceValue);
-    }
-
-    private Wallet getWallet(UUID id) {
-        return this.walletRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 }
