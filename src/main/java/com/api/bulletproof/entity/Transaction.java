@@ -58,6 +58,14 @@ public class Transaction {
         }
     }
 
+    public void finish() {
+        this.status = TransactionStatus.FINISHED;
+    }
+
+    public void cancel() {
+        this.status = TransactionStatus.CANCELED;
+    }
+
     public BigDecimal getValue() {
         return value;
     }

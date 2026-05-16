@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -20,5 +21,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findUser(UUID id) {
         return this.userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado, com ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasBalanceForTransaction(UUID userId, BigDecimal value) {
+        return this.userRepository.hasEnoughBalanceForTransaction(userId, value);
     }
 }

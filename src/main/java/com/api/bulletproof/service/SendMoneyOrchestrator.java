@@ -2,9 +2,7 @@ package com.api.bulletproof.service;
 
 import com.api.bulletproof.dto.SendMoneyDTO;
 import com.api.bulletproof.entity.Transaction;
-import com.api.bulletproof.entity.TransactionStatus;
 import com.api.bulletproof.entity.User;
-import com.api.bulletproof.repository.TransactionRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,14 +17,14 @@ public class SendMoneyOrchestrator {
     private final SendMoneyService sendMoneyService;
     private final StringRedisTemplate redisTemplate;
     private final SendMoneyValidate sendMoneyValidate;
-    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
 
-    SendMoneyOrchestrator(UserService userService, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate, TransactionRepository transactionRepository) {
+    SendMoneyOrchestrator(UserService userService, SendMoneyValidate sendMoneyValidate, SendMoneyService sendMoneyService, StringRedisTemplate redisTemplate, TransactionService transactionService) {
         this.redisTemplate = redisTemplate;
         this.userService = userService;
         this.sendMoneyService = sendMoneyService;
         this.sendMoneyValidate = sendMoneyValidate;
-        this.transactionRepository = transactionRepository;
+        this.transactionService = transactionService;
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
@@ -34,23 +32,21 @@ public class SendMoneyOrchestrator {
         String idempotency = dto.buildIdempotencyKey();
         validateIfTransactionIsInProcessing(idempotency);
 
-        User sender = this.userService.findUser(dto.sender());
-        this.sendMoneyValidate.validateSender(sender, dto.value());
+        this.sendMoneyValidate.validateSender(dto);
 
+        User sender = this.userService.findUser(dto.sender());
         User receiver = this.userService.findUser(dto.receiver());
 
         Transaction transaction = new Transaction(receiver, sender);
 
         try {
             this.sendMoneyService.transferMoney(sender.getWalletId(), receiver.getWalletId(), dto.value(), transaction);
-
-            transaction.setStatus(TransactionStatus.FINISHED);
-            this.transactionRepository.save(transaction);
+            transaction.finish();
         } catch (Exception e) {
-            transaction.setStatus(TransactionStatus.CANCELED);
-            this.transactionRepository.save(transaction);
+            transaction.cancel();
             throw e;
         } finally {
+            this.transactionService.save(transaction);
             redisTemplate.delete(idempotency);
         }
     }
