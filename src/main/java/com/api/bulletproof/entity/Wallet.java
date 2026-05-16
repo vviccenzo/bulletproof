@@ -17,8 +17,7 @@ public class Wallet {
     @Version
     private Long version;
 
-    @OneToOne
-    private User owner;
+    private UUID ownerId;
 
     public UUID getId() {
         return id;
@@ -36,12 +35,12 @@ public class Wallet {
         this.total = total;
     }
 
-    public User getOwner() {
-        return owner;
+    public UUID getOwner() {
+        return ownerId;
     }
 
-    public void setOwner(User owner) {
-        this.owner = owner;
+    public void setOwner(UUID owner) {
+        this.ownerId = owner;
     }
 
     public Long getVersion() {

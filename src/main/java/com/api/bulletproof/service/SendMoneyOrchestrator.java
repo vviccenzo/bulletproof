@@ -31,7 +31,7 @@ public class SendMoneyOrchestrator {
         this.transactionRepository = transactionRepository;
     }
 
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional(rollbackOn = Exception.class, value = Transactional.TxType.REQUIRES_NEW)
     public void execute(SendMoneyDTO dto) {
         String idempotency = dto.buildIdempotencyKey();
         Boolean isNew = redisTemplate.opsForValue().setIfAbsent(idempotency, "processing", Duration.ofMinutes(2));
@@ -54,6 +54,8 @@ public class SendMoneyOrchestrator {
             transaction.setStatus(TransactionStatus.CANCELED);
             this.transactionRepository.save(transaction);
             throw e;
+        } finally {
+            redisTemplate.delete(idempotency);
         }
     }
 
