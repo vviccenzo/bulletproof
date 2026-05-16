@@ -34,17 +34,14 @@ public class SendMoneyOrchestrator {
         String idempotency = dto.buildIdempotencyKey();
         validateIfTransactionIsInProcessing(idempotency);
 
-        Transaction transaction = new Transaction();
+        User sender = this.userService.findUser(dto.sender());
+        this.sendMoneyValidate.validateSender(sender, dto.value());
+
+        User receiver = this.userService.findUser(dto.receiver());
+
+        Transaction transaction = new Transaction(receiver, sender);
 
         try {
-            User sender = this.userService.findUser(dto.sender());
-            this.sendMoneyValidate.validateSender(sender, dto.value());
-
-            User receiver = this.userService.findUser(dto.receiver());
-
-            transaction.setReceiver(receiver);
-            transaction.setSender(sender);
-
             this.sendMoneyService.transferMoney(sender.getWalletId(), receiver.getWalletId(), dto.value(), transaction);
 
             transaction.setStatus(TransactionStatus.FINISHED);

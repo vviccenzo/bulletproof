@@ -1,6 +1,7 @@
 package com.api.bulletproof.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -40,6 +41,14 @@ public class Transaction {
 
     @Enumerated(value = EnumType.STRING)
     private TransactionStatus status = TransactionStatus.PROCESSING;
+
+    public Transaction() {
+    }
+
+    public Transaction(User receiver, User sender) {
+        this.receiver = receiver;
+        this.sender = sender;
+    }
 
     @PrePersist
     public void prePersist() {
