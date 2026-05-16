@@ -1,13 +1,13 @@
 package com.api.bulletproof.service;
 
 import com.api.bulletproof.entity.Transaction;
-import com.api.bulletproof.entity.User;
 import com.api.bulletproof.entity.Wallet;
 import com.api.bulletproof.repository.WalletRepository;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class SendMoneyService {
@@ -20,31 +20,29 @@ public class SendMoneyService {
         this.walletRepository = walletRepository;
     }
 
-    public void transferMoney(User sender, User receiver, BigDecimal transferenceValue, Transaction transaction) {
-        Wallet walletSender = this.walletService.findById(sender.getWalletId());
-        Wallet walletReceiver = this.walletService.findById(receiver.getWalletId());
+    public void transferMoney(UUID walletSenderId, UUID walletReceiverId, BigDecimal transferenceValue, Transaction transaction) {
+        Wallet walletSender = this.walletService.findById(walletSenderId);
+        Wallet walletReceiver = this.walletService.findById(walletReceiverId);
 
-        this.withdraw(sender, transferenceValue, transaction, walletSender);
-        this.deposit(receiver, transferenceValue, transaction, walletReceiver);
+        this.withdraw(transferenceValue, transaction, walletSender);
+        this.deposit(transferenceValue, transaction, walletReceiver);
 
         transaction.setValue(transferenceValue);
 
         this.walletRepository.saveAllAndFlush(List.of(walletSender, walletReceiver));
     }
 
-    private void deposit(User receiver, BigDecimal transferenceValue, Transaction transaction, Wallet walletReceiver) {
+    private void deposit(BigDecimal transferenceValue, Transaction transaction, Wallet walletReceiver) {
         BigDecimal receiverNewValue = this.getReceiverNewValue(walletReceiver, transferenceValue);
         transaction.setOldValueReceiver(walletReceiver.getTotal());
-        transaction.setReceiver(receiver);
         transaction.setNewValueReceiver(receiverNewValue);
         walletReceiver.setTotal(receiverNewValue);
     }
 
-    private void withdraw(User sender, BigDecimal transferenceValue, Transaction transaction, Wallet walletSender) {
+    private void withdraw(BigDecimal transferenceValue, Transaction transaction, Wallet walletSender) {
         BigDecimal senderNewValue = this.getSenderNewValue(walletSender, transferenceValue);
         transaction.setOldValueSender(walletSender.getTotal());
         transaction.setNewValueSender(senderNewValue);
-        transaction.setSender(sender);
         walletSender.setTotal(senderNewValue);
     }
 

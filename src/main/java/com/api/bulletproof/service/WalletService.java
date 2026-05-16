@@ -4,6 +4,7 @@ import com.api.bulletproof.entity.Wallet;
 import com.api.bulletproof.repository.WalletRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ public class WalletService {
         this.walletRepository = walletRepository;
     }
 
+    @Transactional(readOnly = true)
     public Wallet findById(UUID id) {
         return this.walletRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }

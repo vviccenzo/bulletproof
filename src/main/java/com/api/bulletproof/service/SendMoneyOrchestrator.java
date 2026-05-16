@@ -5,9 +5,10 @@ import com.api.bulletproof.entity.Transaction;
 import com.api.bulletproof.entity.TransactionStatus;
 import com.api.bulletproof.entity.User;
 import com.api.bulletproof.repository.TransactionRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
@@ -28,13 +29,10 @@ public class SendMoneyOrchestrator {
         this.transactionRepository = transactionRepository;
     }
 
-    @Transactional(rollbackOn = Exception.class, value = Transactional.TxType.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public void execute(SendMoneyDTO dto) {
         String idempotency = dto.buildIdempotencyKey();
-        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(idempotency, "processing", Duration.ofMinutes(2));
-        if (Boolean.FALSE.equals(isNew)) {
-            throw new RuntimeException("Transaction in proccessing status.");
-        }
+        validateIfTransactionIsInProcessing(idempotency);
 
         Transaction transaction = new Transaction();
 
@@ -43,7 +41,11 @@ public class SendMoneyOrchestrator {
             this.sendMoneyValidate.validateSender(sender, dto.value());
 
             User receiver = this.userService.findUser(dto.receiver());
-            this.sendMoneyService.transferMoney(sender, receiver, dto.value(), transaction);
+
+            transaction.setReceiver(receiver);
+            transaction.setSender(sender);
+
+            this.sendMoneyService.transferMoney(sender.getWalletId(), receiver.getWalletId(), dto.value(), transaction);
 
             transaction.setStatus(TransactionStatus.FINISHED);
             this.transactionRepository.save(transaction);
@@ -53,6 +55,13 @@ public class SendMoneyOrchestrator {
             throw e;
         } finally {
             redisTemplate.delete(idempotency);
+        }
+    }
+
+    private void validateIfTransactionIsInProcessing(String idempotency) {
+        Boolean isNew = redisTemplate.opsForValue().setIfAbsent(idempotency, "processing", Duration.ofMinutes(2));
+        if (Boolean.FALSE.equals(isNew)) {
+            throw new RuntimeException("Transaction in proccessing status.");
         }
     }
 }
